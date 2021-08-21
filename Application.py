@@ -4,8 +4,10 @@ from pyspark.sql.functions import col
 import os
 import sys
 import logging
+import chispa
 
-logging.basicConfig(filename='Application.log',level=logging.INFO,format='%(levelname)s:%(name)s:%(message)s')
+
+logging.basicConfig(filename='Application.log',level=logging.INFO,filemode='w',format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
 
 schema_clients = StructType([StructField('id', IntegerType (), True),
                               StructField('first_name', StringType (), True),
@@ -57,6 +59,15 @@ if __name__ == '__main__':
 
     # Client_columns_to_drop = ['first_name', 'last_name']
     # Client_columns_to_drop = ['first_name', 'last_name']
+    if os.path.exists ('Source_Dir/dataset_one1.csv'):
+        logging.info('dataset_one existis')
+    else:
+        logging.error('Dataset_one file doesnt exist')
+
+    if os.path.exists ('Source_Dir/dataset_two.csv'):
+        logging.info('dataset_one existis')
+    else:
+        logging.error('Dataset_two file doesnt exist')
 
     clients_df = spark.read \
         .format ("csv") \
@@ -64,16 +75,20 @@ if __name__ == '__main__':
         .option ("header", "true") \
         .load ('Source_Dir/dataset_one.csv')
 
+    logging.info('Client data from created')
+
     Final_client_data = filtering_df (clients_df)
+
+    logging.info('Client data filtered')
 
     financial_df = spark.read \
         .format ("csv") \
         .option ("header", "true") \
         .schema (financial_clients) \
         .load ('Source_Dir/dataset_two.csv')
-
+    logging.info('financial data from created')
     Final_financial_df = rename_Column (financial_df)
-
+    logging.info ('financial data fram cloumns renamed')
     # Final_client_data.show(5)
     # Final_financial_df.show(5)
 
@@ -87,4 +102,4 @@ if __name__ == '__main__':
         .format("csv") \
         .save ("client_data/", header='true')
 
-    print ("File created")
+    logging.info('Final file craeted in client_data')
