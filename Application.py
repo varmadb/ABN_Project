@@ -44,13 +44,13 @@ def rename_Column (financial_details):
 
 
 if __name__ == '__main__':
-    n = int(sys.argv[1])
-    a = 2
-    tables = []
-    for _ in range (n):
-        tables.append (sys.argv[a])
-        a += 1
-    print (tables)
+    # n = int(sys.argv[1])
+    # a = 2
+    # tables = []
+    # for _ in range (n):
+    #     tables.append (sys.argv[a])
+    #     a += 1
+    # print (tables)
 
     spark = SparkSession.builder.appName ("ABN_AMRO").master ("local[*]").getOrCreate ()
     sc = spark.sparkContext
