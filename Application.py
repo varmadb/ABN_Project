@@ -68,8 +68,6 @@ if __name__ == '__main__':
         spark = SparkSession.builder.appName ("ABN_AMRO").master ("local[*]").getOrCreate ()
         sc = spark.sparkContext
 
-        # Client_columns_to_drop = ['first_name', 'last_name']
-        # Client_columns_to_drop = ['first_name', 'last_name']
         if os.path.exists (dataset_ond_filepath):
             logging.info ('dataset_one exists')
         else:
