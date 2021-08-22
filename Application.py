@@ -1,35 +1,54 @@
+################################
+# This function filter the data based countries from financial dataset
+################################
+import collections
 from pyspark.sql import SparkSession
 from pyspark.sql.types import *
 from pyspark.sql.functions import col
 import os
 import sys
 import logging
-import chispa
+from logging.handlers import RotatingFileHandler
+import pandas as pd
+
+################################
+# This function filter the data based countries from financial dataset
+################################
+
+logger = logging.getLogger ('Application.log')
+logger.setLevel (logging.INFO)
+handler = RotatingFileHandler ('Log/Application.log', maxBytes=2000, backupCount=10)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler (handler)
 
 
-logging.basicConfig(filename='Application.log',level=logging.INFO,filemode='w',format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+class NoOfArg (Exception):
+    """Base class for other exceptions"""
+    pass
 
-schema_clients = StructType([StructField('id', IntegerType (), True),
-                              StructField('first_name', StringType (), True),
-                              StructField('last_name', StringType (), True),
-                              StructField('email', StringType (), True),
-                              StructField('country', StringType (), True)])
+class Pathdoesnotexist(Exception):
+    """Base class for other exceptions"""
+    pass
 
-financial_clients = StructType([StructField ('id', IntegerType (), True),
+schema_clients = StructType ([StructField ('id', IntegerType (), True),
+                              StructField ('first_name', StringType (), True),
+                              StructField ('last_name', StringType (), True),
+                              StructField ('email', StringType (), True),
+                              StructField ('country', StringType (), True)])
+
+financial_clients = StructType ([StructField ('id', IntegerType (), True),
                                  StructField ('btc_a', StringType (), True),
                                  StructField ('cc_t', StringType (), True),
                                  StructField ('cc_n', LongType (), True),
                                  ])
 
 
-def filtering_df(clinets_details):
+def filtering_df (clinets_details, country_list):
     """
     This function filter the data based countries from client dataset
-    :type clients_details: object
     """
-    fl_clients = clinets_details.filter (
-        (clinets_details.country == "Netherlands") | (clinets_details.country == "United Kingdom")) \
-        .select ('id', 'email', 'country')
+    fl_clients = clinets_details.where ((col ("country").isin (country_list)))
     return fl_clients
 
 
@@ -38,68 +57,93 @@ def rename_Column (financial_details):
     This function filter the data based countries from financial dataset
     :type financial_details: object
     """
-    renamed_df = financial_details.select (col ("id").alias ("client_identifier"),
-                                           col ("btc_a").alias ("bitcoin_address"),
-                                           col ("cc_t").alias ("credit_card_type")
-                                           )
-    return renamed_df
+    try:
+        if pd.Series(['id', 'btc_a','cc_t']).isin(financial_details.columns).all():
+            renamed_df = financial_details.select (col ("id").alias ("client_identifier"),
+                                                   col ("btc_a").alias ("bitcoin_address"),
+                                                   col ("cc_t").alias ("credit_card_type")
+                                                   )
+            return renamed_df
+        else:
+            raise ValueError("Required columns not present in the dataset ")
+    except ValueError as exp:
+            print('Required columns not present in the dataset ')
+
+
 
 
 if __name__ == '__main__':
-    # n = int(sys.argv[1])
-    # a = 2
-    # tables = []
-    # for _ in range (n):
-    #     tables.append (sys.argv[a])
-    #     a += 1
-    # print (tables)
+    logger.info('-----------Job started-----------')
+    try:
+        n = len (sys.argv)  # int(sys.argv[1])
+        if n > 3:
+            logger.info ("number of arguments :%s", n - 1)
+            dataset_ond_filepath = sys.argv[1]
+            dataset_two_filepath = sys.argv[2]
+            country_list = str (sys.argv[3]).split (',')
+        else:
+            raise NoOfArg()
 
-    spark = SparkSession.builder.appName ("ABN_AMRO").master ("local[*]").getOrCreate ()
-    sc = spark.sparkContext
+        logger.info(f'dataset one file name : {dataset_ond_filepath}')
+        logger.info(f'dataset two file name : {dataset_two_filepath}')
+        logger.info(f'dataset country list : {country_list}')
 
-    # Client_columns_to_drop = ['first_name', 'last_name']
-    # Client_columns_to_drop = ['first_name', 'last_name']
-    if os.path.exists ('Source_Dir/dataset_one1.csv'):
-        logging.info('dataset_one existis')
-    else:
-        logging.error('Dataset_one file doesnt exist')
+        spark = SparkSession.builder.appName ("ABN_AMRO").master ("local[*]").getOrCreate ()
+        sc = spark.sparkContext
 
-    if os.path.exists ('Source_Dir/dataset_two.csv'):
-        logging.info('dataset_one existis')
-    else:
-        logging.error('Dataset_two file doesnt exist')
+        if os.path.exists (dataset_ond_filepath):
+            logger.info ('dataset_one exists')
+        else:
+            logger.error ('Dataset_one file doesnt exist')
+            raise Pathdoesnotexist
 
-    clients_df = spark.read \
-        .format ("csv") \
-        .schema (schema_clients) \
-        .option ("header", "true") \
-        .load ('Source_Dir/dataset_one.csv')
+        if os.path.exists (dataset_two_filepath):
+            logger.info ('dataset_one exists')
+        else:
+            logger.error ('Dataset_two file doesnt exist')
+            raise Pathdoesnotexist
 
-    logging.info('Client data from created')
+        clients_df = spark.read \
+            .format ("csv") \
+            .schema (schema_clients) \
+            .option ("header", "true") \
+            .load (dataset_ond_filepath)
 
-    Final_client_data = filtering_df (clients_df)
 
-    logging.info('Client data filtered')
+        logger.info ('Client data from created')
 
-    financial_df = spark.read \
-        .format ("csv") \
-        .option ("header", "true") \
-        .schema (financial_clients) \
-        .load ('Source_Dir/dataset_two.csv')
-    logging.info('financial data from created')
-    Final_financial_df = rename_Column (financial_df)
-    logging.info ('financial data fram cloumns renamed')
-    # Final_client_data.show(5)
-    # Final_financial_df.show(5)
+        Final_client_data = filtering_df (clients_df, country_list)
 
-    Final_client_df = Final_client_data.join (Final_financial_df,
-                                              Final_client_data.id == Final_financial_df.client_identifier, "inner") \
-        .select ('client_identifier', 'email', 'country', 'bitcoin_address', 'credit_card_type')
+        logger.info ('Client data filtered')
 
-    #Final_client_df.show ()
+        financial_df = spark.read \
+            .format ("csv") \
+            .option ("header", "true") \
+            .schema (financial_clients) \
+            .load (dataset_two_filepath)
 
-    Final_client_df.write.mode ("append") \
-        .format("csv") \
-        .save ("client_data/", header='true')
 
-    logging.info('Final file craeted in client_data')
+        logger.info ('financial data from created')
+
+        Final_financial_df = rename_Column (financial_df)
+
+        logger.info ('financial data farm columns renamed')
+
+        Final_client_df = Final_client_data.join (Final_financial_df,
+                                                  Final_client_data.id == Final_financial_df.client_identifier, "inner") \
+            .select ('client_identifier', 'email', 'country', 'bitcoin_address', 'credit_card_type')
+
+        Final_client_df.write.mode ("append") \
+            .format ("csv") \
+            .save ("client_data/", header='true')
+
+        logger.info ('-----------Final file created in client_data-----------------')
+        logger.info ('-----------Job completed-----------')
+
+    except NoOfArg:
+        logger.exception ("wrong number of arguments ")
+        pass
+    except Pathdoesnotexist:
+        logger.exception ("file path doesnt exist")
+        pass
+
