@@ -2,9 +2,6 @@ from Application import rename_Column
 from .spark import *
 import collections
 from chispa import *
-# from chispa.dataframe_comparer import are_dfs_equal
-# from chispa.schema_comparer import SchemasNotEqualError
-
 
 def test_rename_Column ():
     source_data = [
