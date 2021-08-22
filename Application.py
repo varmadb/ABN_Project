@@ -4,15 +4,25 @@ from pyspark.sql.functions import col
 import os
 import sys
 import logging
+from logging.handlers import RotatingFileHandler
+import pandas as pd
+
+################################""
+# This function filter the data based countries from financial dataset
+#
+# """
+logger = logging.getLogger ('Application.log')
+logger.setLevel (logging.INFO)
+handler = RotatingFileHandler ('Log/Application.log', maxBytes=2000, backupCount=10)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler (handler)
 
 
 class NoOfArg (Exception):
     """Base class for other exceptions"""
     pass
 
-
-logging.basicConfig (filename="Application.log", level=logging.INFO, filemode='w',
-                     format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
 
 schema_clients = StructType ([StructField ('id', IntegerType (), True),
                               StructField ('first_name', StringType (), True),
@@ -27,13 +37,11 @@ financial_clients = StructType ([StructField ('id', IntegerType (), True),
                                  ])
 
 
-def filtering_df (clinets_details):
+def filtering_df (clinets_details, country_list):
     """
     This function filter the data based countries from client dataset
     """
-    fl_clients = clinets_details.filter (
-        (clinets_details.country == "Netherlands") | (clinets_details.country == "United Kingdom")) \
-        .select ('id', 'email', 'country')
+    fl_clients = clinets_details.where ((col ("country").isin (country_list)))
     return fl_clients
 
 
@@ -42,67 +50,74 @@ def rename_Column (financial_details):
     This function filter the data based countries from financial dataset
     :type financial_details: object
     """
-    renamed_df = financial_details.select (col ("id").alias ("client_identifier"),
-                                           col ("btc_a").alias ("bitcoin_address"),
-                                           col ("cc_t").alias ("credit_card_type")
-                                           )
-    return renamed_df
+    try:
+        if pd.Series(['id', 'btc_a','cc_t']).isin(financial_details.columns).all():
+            renamed_df = financial_details.select (col ("id").alias ("client_identifier"),
+                                                   col ("btc_a").alias ("bitcoin_address"),
+                                                   col ("cc_t").alias ("credit_card_type")
+                                                   )
+            return renamed_df
+        else:
+            raise ValueError("Required columns not present in the dataset ")
+    except ValueError as exp:
+            print('Required columns not present in the dataset ')
+
+
 
 
 if __name__ == '__main__':
     try:
         n = len (sys.argv)  # int(sys.argv[1])
         if n > 3:
-            logging.info ("number of arguments :%s", n - 1)
+            logger.info ("number of arguments :%s", n - 1)
             dataset_ond_filepath = sys.argv[1]
             dataset_two_filepath = sys.argv[2]
             country_list = str (sys.argv[3]).split (',')
         else:
             raise NoOfArg
 
-        print (len (sys.argv))
-        print (f'dataset one file name : {dataset_ond_filepath}')
-        print (f'dataset two file name : {dataset_two_filepath}')
-        print (f'dataset country list : {country_list}')
+        logger.info(f'dataset one file name : {dataset_ond_filepath}')
+        logger.info(f'dataset two file name : {dataset_two_filepath}')
+        logger.info(f'dataset country list : {country_list}')
 
         spark = SparkSession.builder.appName ("ABN_AMRO").master ("local[*]").getOrCreate ()
         sc = spark.sparkContext
 
         if os.path.exists (dataset_ond_filepath):
-            logging.info ('dataset_one exists')
+            logger.info ('dataset_one exists')
         else:
-            logging.error ('Dataset_one file doesnt exist')
+            logger.error ('Dataset_one file doesnt exist')
 
         if os.path.exists (dataset_two_filepath):
-            logging.info ('dataset_one exists')
+            logger.info ('dataset_one exists')
         else:
-            logging.error ('Dataset_two file doesnt exist')
+            logger.error ('Dataset_two file doesnt exist')
 
         clients_df = spark.read \
             .format ("csv") \
             .schema (schema_clients) \
             .option ("header", "true") \
             .load (dataset_ond_filepath)
-        # .load ('Source_Dir/dataset_one.csv')
 
-        logging.info ('Client data from created')
 
-        Final_client_data = filtering_df (clients_df)
+        logger.info ('Client data from created')
 
-        logging.info ('Client data filtered')
+        Final_client_data = filtering_df (clients_df, country_list)
+
+        logger.info ('Client data filtered')
 
         financial_df = spark.read \
             .format ("csv") \
             .option ("header", "true") \
             .schema (financial_clients) \
             .load (dataset_two_filepath)
-        # .load ('Source_Dir/dataset_two.csv')
 
-        logging.info ('financial data from created')
+
+        logger.info ('financial data from created')
 
         Final_financial_df = rename_Column (financial_df)
 
-        logging.info ('financial data farm columns renamed')
+        logger.info ('financial data farm columns renamed')
 
         Final_client_df = Final_client_data.join (Final_financial_df,
                                                   Final_client_data.id == Final_financial_df.client_identifier, "inner") \
@@ -112,7 +127,7 @@ if __name__ == '__main__':
             .format ("csv") \
             .save ("client_data/", header='true')
 
-        logging.info ('Final file created in client_data')
+        logger.info ('-----------Final file created in client_data-----------------')
 
     except NoOfArg:
-        logging.exception ("wrong number of arguments ")
+        logger.exception ("wrong number of arguments ")
