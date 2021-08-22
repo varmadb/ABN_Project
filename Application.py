@@ -1,3 +1,7 @@
+################################
+# This function filter the data based countries from financial dataset
+################################
+import collections
 from pyspark.sql import SparkSession
 from pyspark.sql.types import *
 from pyspark.sql.functions import col
@@ -7,10 +11,10 @@ import logging
 from logging.handlers import RotatingFileHandler
 import pandas as pd
 
-################################""
+################################
 # This function filter the data based countries from financial dataset
-#
-# """
+################################
+
 logger = logging.getLogger ('Application.log')
 logger.setLevel (logging.INFO)
 handler = RotatingFileHandler ('Log/Application.log', maxBytes=2000, backupCount=10)
@@ -23,6 +27,9 @@ class NoOfArg (Exception):
     """Base class for other exceptions"""
     pass
 
+class Pathdoesnotexist(Exception):
+    """Base class for other exceptions"""
+    pass
 
 schema_clients = StructType ([StructField ('id', IntegerType (), True),
                               StructField ('first_name', StringType (), True),
@@ -66,6 +73,7 @@ def rename_Column (financial_details):
 
 
 if __name__ == '__main__':
+    logger.info('-----------Job started-----------')
     try:
         n = len (sys.argv)  # int(sys.argv[1])
         if n > 3:
@@ -74,7 +82,7 @@ if __name__ == '__main__':
             dataset_two_filepath = sys.argv[2]
             country_list = str (sys.argv[3]).split (',')
         else:
-            raise NoOfArg
+            raise NoOfArg()
 
         logger.info(f'dataset one file name : {dataset_ond_filepath}')
         logger.info(f'dataset two file name : {dataset_two_filepath}')
@@ -87,11 +95,13 @@ if __name__ == '__main__':
             logger.info ('dataset_one exists')
         else:
             logger.error ('Dataset_one file doesnt exist')
+            raise Pathdoesnotexist
 
         if os.path.exists (dataset_two_filepath):
             logger.info ('dataset_one exists')
         else:
             logger.error ('Dataset_two file doesnt exist')
+            raise Pathdoesnotexist
 
         clients_df = spark.read \
             .format ("csv") \
@@ -128,6 +138,12 @@ if __name__ == '__main__':
             .save ("client_data/", header='true')
 
         logger.info ('-----------Final file created in client_data-----------------')
+        logger.info ('-----------Job completed-----------')
 
     except NoOfArg:
         logger.exception ("wrong number of arguments ")
+        pass
+    except Pathdoesnotexist:
+        logger.exception ("file path doesnt exist")
+        pass
+
