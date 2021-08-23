@@ -1,7 +1,8 @@
 from chispa.dataframe_comparer import *
 from Application import rename_Column
 from tests.spark import spark
-
+from .spark import *
+from chispa import *
 
 def test_df_compare_schema_equal ():
     input_df = spark.createDataFrame (
@@ -20,7 +21,6 @@ def test_df_compare_schema_equal ():
 
     assert_df_equality (transformed_df, expected_df)
 
-
 def test_df_compare_schema_Not_equal ():
     input_df = spark.createDataFrame (
         data=[[1, '1wjtPamAZeGhRnZfhBAHHHjNvnHefd2V2', 'visa - electro1', 4175006996999270],
@@ -37,3 +37,4 @@ def test_df_compare_schema_Not_equal ():
         schema=['client_identifier', 'bitcoin_address', 'credit_card_type1'])
 
     assert_df_equality (transformed_df, expected_df)
+
