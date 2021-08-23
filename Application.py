@@ -73,7 +73,7 @@ def rename_Column (financial_details):
 
 
 if __name__ == '__main__':
-    logger.info('-----------Job started-----------')
+    logger.info('Job started')
     try:
         n = len (sys.argv)  # int(sys.argv[1])
         if n > 3:
@@ -137,8 +137,8 @@ if __name__ == '__main__':
             .format ("csv") \
             .save ("client_data/", header='true')
 
-        logger.info ('-----------Final file created in client_data-----------------')
-        logger.info ('-----------Job completed-----------')
+        logger.info ('Final file created in client_data')
+        logger.info ('Job completed')
 
     except NoOfArg:
         logger.exception ("wrong number of arguments ")
