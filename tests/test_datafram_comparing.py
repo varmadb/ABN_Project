@@ -1,8 +1,8 @@
-from chispa.dataframe_comparer import *
-from Application import rename_Column
-from tests.spark import spark
-from .spark import *
 from chispa import *
+
+from Application import rename_Column
+from .spark import *
+
 
 def test_df_compare_schema_equal ():
     input_df = spark.createDataFrame (
