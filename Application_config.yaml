@@ -1,1 +1,11 @@
-
+File_dir: 
+  Application_log: Log/Application.log
+  column_bcc_t_renamed: credit_card_type
+  column_btc_a: btc_a
+  column_btc_a_renamed: bitcoin_address
+  column_cc_t: cc_t
+  column_id: id
+  column_id_renamed: client_identifier
+  destination_dir: client_data
+  log_formatter: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  source_dir_name: Source_Dir

@@ -24,7 +24,21 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\modules\Application.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\requirements.txt">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\tests\test_Filter_data_validation.py">
           <value>
             <Attribute>
               <option name="separator" value="," />

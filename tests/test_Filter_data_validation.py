@@ -1,12 +1,9 @@
-from Application import rename_Column, filtering_df
-import pytest
-from pyspark.sql.types import *
-from chispa.schema_comparer import *
 from chispa.dataframe_comparer import *
+from Application import filtering_df
 from tests.spark import spark
 
 
-def test_df_filetered_data_compare ():
+def test_df_filetered_data_equal ():
     input_df = spark.createDataFrame (
         data=[
             [1, 'Feliza', 'Eusden', 'feusden0@ameblo.jp', 'France'],
@@ -27,7 +24,7 @@ def test_df_filetered_data_compare ():
     assert_df_equality (transformed_df, expected_df)
 
 
-def test_df_filetered_data_not_compare ():
+def test_df_filetered_data_not_equal():
     input_df = spark.createDataFrame (
         data=[
             [1, 'Feliza', 'Eusden', 'feusden0@ameblo.jp', 'France'],
@@ -48,4 +45,5 @@ def test_df_filetered_data_not_compare ():
     try:
         assert assert_df_equality (transformed_df, expected_df)
     except DataFramesNotEqualError:
+        print('Data incorrect')
         assert True
