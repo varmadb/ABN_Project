@@ -5,33 +5,11 @@ import logging
 import os
 import sys
 import pandas as pd
-import yaml
 
 from logging.handlers import RotatingFileHandler
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import *
-
-
-################################
-# Reading config variable from YAML
-################################
-# with open('conf/app_config.yaml', 'r') as cofigymlfile:
-#     cfg = yaml.safe_load(cofigymlfile)
-
-
-
-
-################################
-# Assign config variable
-################################
-# Source_Dir_name = cfg['File_dir']['source_dir_name']
-# destination_dir = cfg['File_dir']['destination_dir']
-# log_file = cfg['File_dir']['Application_log']
-# log_formate=cfg['File_dir']['log_formatter']
-################################
-# Logging ste-up
-################################
 
 logger = logging.getLogger('Application.log')
 logger.setLevel(logging.INFO)
